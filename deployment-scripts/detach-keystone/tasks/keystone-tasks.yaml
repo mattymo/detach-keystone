@@ -1,0 +1,57 @@
+# Deployment groups
+- id: primary-keystone
+  type: group
+  role: [primary-keystone]
+  requires: [deploy_start]
+  required_for: [deploy_end, primary-controller, controller]
+  tasks: [fuel_pkgs, hiera, globals, tools, logging, netconfig, hosts, firewall,
+    deploy_start, cluster, keystone-vip, cluster-haproxy, task-keystone]
+  parameters:
+    strategy:
+      type: one_by_one
+
+- id: keystone
+  type: group
+  role: [keystone]
+  requires: [deploy_start, primary-keystone, primary-controller, controller]
+  required_for: [deploy_end]
+  tasks: [fuel_pkgs, hiera, globals, tools, logging, netconfig, hosts, firewall,
+    deploy_start, cluster, keystone-vip, cluster-haproxy, task-keystone]
+  parameters:
+    strategy:
+      type: parallel
+
+# Deployment tasks
+- id: keystone-haproxy
+  type: puppet
+  groups: [primary-keystone, keystone]
+  required_for: [task-keystone, deploy_end]
+  requires: [deploy_start, keystone-vip, cluster-haproxy]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/detach-keystone/haproxy.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+
+- id: keystone-vip
+  type: puppet
+  groups: [primary-keystone, keystone]
+  required_for: [deploy_end]
+  requires: [cluster]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/detach-keystone/vip.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+
+- id: task-keystone
+  type: puppet
+  role: [primary-keystone, keystone]
+  requires: [hosts, firewall]
+  requires: [keystone-haproxy, keystone-vip]
+  parameters:
+    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/keystone/keystone.pp
+    puppet_modules: /etc/puppet/modules
+    timeout: 3600
+  test_pre:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/keystone/keystone_pre.rb
+  test_post:
+    cmd: ruby /etc/puppet/modules/osnailyfacter/modular/keystone/keystone_post.rb
