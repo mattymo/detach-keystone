@@ -1,0 +1,19 @@
+#!/bin/bash -x
+
+# Add here any the actions which are required before plugin build
+# like packages building, packages downloading from mirrors and so on.
+# The script should return 0 if there were no errors.
+
+repo='http://apt.puppetlabs.com/pool/stable/'
+pkg='ruby-deep-merge_1.0.0-1puppetlabs1_all.deb'
+address="$repo/dependencies/${pkg:0:1}/${pkg%%_*}/$pkg"
+
+if type -P curl >/dev/null; then
+  downloader='curl -O'
+elif type -P wget >/dev/null; then 
+  downloader='wget'
+else
+  exit 1
+fi
+
+cd detach-db/repositories/ubuntu/ && $downloader $address

@@ -1,0 +1,8 @@
+meta:
+  description: 'Separated Keystone from controller'
+  has_primary: true
+  name: 'Keystone'
+name: keystone
+volumes_roles_mapping:
+  - allocate_size: min
+    id: os
