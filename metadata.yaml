@@ -13,7 +13,7 @@ licenses: ['Apache License Version 2.0']
 # Specify author or company name
 authors: ['Bartlomiej Piotrowski', 'Mirantis']
 # A link to the plugin's page
-homepage: 'https://gitlab.com/barthalion/detach-keystone'
+homepage: 'https://github.com/barthalion/detach-keystone'
 # Specify a group which your plugin implements, possible options:
 # network, storage, storage::cinder, storage::glance, hypervisor
 groups: [network]
