@@ -4,7 +4,7 @@ $detach_keystone_plugin = hiera('detach-keystone')
 $settings_hash          = parseyaml($detach_keystone_plugin['yaml_additional_config'])
 $nodes_hash             = hiera('nodes')
 $management_vip         = hiera('management_vip')
-$keystone_vip           = pick(hiera('keystone_vip'), hiera('service_endpoint'))
+$keystone_vip           = hiera('service_endpoint')
 
 if hiera('role', 'none') == 'primary-keystone' {
   $primary_keystone = 'true'
