@@ -19,6 +19,6 @@ function create_roles {
 }
 
 create_roles
-cp -a ${PLUGIN_DIR}/deployment_scripts/detach-db /etc/puppet/$FUEL_REL/modules/osnailyfacter/modular/
+cp -a ${PLUGIN_DIR}/deployment_scripts/detach-keystone /etc/puppet/$FUEL_REL/modules/osnailyfacter/modular/
 $FUEL rel --sync-deployment-tasks --dir /etc/puppet/$FUEL_REL
 

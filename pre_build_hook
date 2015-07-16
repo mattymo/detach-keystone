@@ -16,4 +16,4 @@ else
   exit 1
 fi
 
-cd detach-db/repositories/ubuntu/ && $downloader $address
+cd detach-keystone/repositories/ubuntu/ && $downloader $address

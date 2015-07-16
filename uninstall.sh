@@ -17,6 +17,6 @@ function delete_roles {
 }
 
 delete_roles
-rm -rf /etc/puppet/$FUEL_REL/modules/osnailyfacter/modular/detach-db
+rm -rf /etc/puppet/$FUEL_REL/modules/osnailyfacter/modular/detach-keystone
 $FUEL rel --sync-deployment-tasks --dir /etc/puppet/$FUEL_REL
 
