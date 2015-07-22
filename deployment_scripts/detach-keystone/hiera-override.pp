@@ -1,6 +1,9 @@
 notice('MODULAR: detach-keystone/hiera-override.pp')
 
 $detach_keystone_plugin = hiera('detach-keystone', undef)
+$hiera_dir              = '/etc/hiera/override'
+$plugin_yaml            = "detach-keystone.yaml"
+$plugin_name            = "detach-keystone"
 
 if $detach_keystone_plugin {
   $network_metadata = hiera_hash('network_metadata')
@@ -14,18 +17,19 @@ if $detach_keystone_plugin {
   } else {
     $primary_keystone = 'false'
   }
+
   if hiera('role', 'none') =~ /^primary/ {
     $primary_controller = 'true'
   } else {
     $primary_controller = 'false'
   }
 
-  $keystone_nodes      = get_nodes_hash_by_roles($network_metadata,
+  $keystone_nodes       = get_nodes_hash_by_roles($network_metadata,
     ['primary_keystone', 'keystone'])
-  $keystone_ipaddr_map = get_node_t_ipaddr_map_by_network_role($keystone_nodes,
+  $keystone_address_map = get_node_to_ipaddr_map_by_network_role($keystone_nodes,
     'mgmt/keystone')
-  $keystone_ips        = values($keystone_ipaddr_map)
-  $keystone_names      = keys($keystone_ipaddr_map)
+  $keystone_nodes_ips   = values($keystone_address_map)
+  $keystone_nodes_names = keys($keystone_address_map)
 
   case hiera('role', 'none') {
     /keystone/: {
@@ -45,24 +49,39 @@ if $detach_keystone_plugin {
   $calculated_content = inline_template('
 primary_keystone: <%= @primary_keystone %>
 keystone_vip: <%= @keystone_vip %>
-<% if @keystone_nodes_ips -%>
+<% if @keystone_nodes -%>
+<% require "yaml" -%>
 keystone_nodes:
-<% @keystone_nodes_ips.each do |dbnode| %>  - <%= dbnode %><% end -%>
+<%= YAML.dump(@keystone_nodes).sub(/--- *$/,"") %>
+<% end -%>
 keystone_ipaddresses:
-<% @keystone_nodes_ips.each do |dbnode| %>  - <%= dbnode %><% end -%>
+<% if @keystone_nodes_ips -%>
+<%
+@keystone_nodes_ips.each do |dbnode|
+%>  - <%= dbnode %>
+<% end -%>
 <% end -%>
 <% if @keystone_nodes_names -%>
-keystone_names:
-<% @keystone_nodes_names.each do |dbnode| %>  - <%= dbnode %><% end -%>
+mysqld_names:
+<%
+@keystone_nodes_names.each do |dbnode|
+%>  - <%= dbnode %>
 <% end -%>
+<% end -%>
+mysql:
+  enabled: <%= @mysql_enabled %>
 primary_controller: <%= @primary_controller %>
 <% if @corosync_nodes -%>
+<% require "yaml" -%>
 corosync_nodes:
-<% @corosync_nodes.each do |cnode| %>  - <%= cnode %><% end -%>
+<%= YAML.dump(@corosync_nodes).sub(/--- *$/,"") %>
 <% end -%>
 <% if @corosync_roles -%>
 corosync_roles:
-<% @corosync_roles.each do |crole| %>  - <%= crole %><% end -%>
+<%
+@corosync_roles.each do |crole|
+%>  - <%= crole %>
+<% end -%>
 <% end -%>
 deploy_vrouter: <%= @deploy_vrouter %>
 ')
@@ -71,19 +90,19 @@ deploy_vrouter: <%= @deploy_vrouter %>
     ensure  => directory,
   }
 
-  file { '/etc/hiera/override/plugins.yaml':
+  file { "${hiera_dir}/${plugin_yaml}":
     ensure  => file,
     content => "${detach_db_plugin['yaml_additional_config']}\n${calculated_content}\n",
-    require => File['/etc/hiera/override']
+    require => File['/etc/hiera/override'],
   }
 
   package { 'ruby-deep-merge':
     ensure  => 'installed',
   }
 
-  file_line { 'hiera.yaml':
-    path => '/etc/hiera.yaml',
-    line => ':merge_behavior: deeper',
+  file_line {"${plugin_name}_hiera_override":
+    path  => '/etc/hiera.yaml',
+    line  => "  - override/${plugin_name}",
+    after => '  - override/module/%{calling_module}',
   }
-
 }
