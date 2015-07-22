@@ -10,7 +10,7 @@ address="$repo/dependencies/${pkg:0:1}/${pkg%%_*}/$pkg"
 
 if type -P curl >/dev/null; then
   downloader='curl -O'
-elif type -P wget >/dev/null; then 
+elif type -P wget >/dev/null; then
   downloader='wget'
 else
   exit 1
