@@ -4,5 +4,5 @@
     subnet: true
     gateway: false
     vip:
-       - name: 'keystone'
+       - name: 'service_endpoint'
          namespace: 'haproxy'

@@ -4,7 +4,8 @@ $internal_int             = hiera('internal_int')
 $public_int               = hiera('public_int',  undef)
 $primary_controller_nodes = hiera('primary_controller_nodes', false)
 $network_scheme           = hiera('network_scheme', {})
-$keystone_vip             = hiera('keystone_vip', undef)
+$keystone_vip             = hiera('service_endpoint')
+$keystone_public_vip      = hiera('keystone_public_vip')
 
 #FIXME(bpiotrowski): This netmask data is the same as mgmt network
 if (hiera('vip_management_cidr_netmask', false)) {
@@ -28,6 +29,22 @@ $keystone_vip_data  = {
   ping_host_list => '',
 }
 
-cluster::virtual_ip { 'keystone' :
+cluster::virtual_ip { 'service_endpoint' :
   vip => $keystone_vip_data,
+}
+
+$keystone_public_vip_data = {
+  namespace            => 'haproxy',
+  nic                  => $public_int,
+  base_veth            => "${public_int}-hapr",
+  ns_veth              => 'hapr-p',
+  ip                   => $keystone_public_vip,
+  gateway              => $network_scheme['endpoints']['br-ex']['gateway'],
+  gateway_metric       => '10',
+  cidr_netmask         => $vip_public_cidr_netmask,
+  bridge               => $network_scheme['roles']['ex'],
+  other_networks       => $vip_publ_other_nets,
+}
+cluster::virtual_ip { 'public_service_endpoint' :
+  vip => $keystone_public_vip_data,
 }

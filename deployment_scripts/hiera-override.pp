@@ -10,8 +10,9 @@ if $detach_keystone_plugin {
   $settings_hash    = parseyaml($detach_keystone_plugin['yaml_additional_config'])
   $nodes_hash       = hiera('nodes')
   $management_vip   = hiera('management_vip')
-  $keystone_vip     = hiera('service_endpoint')
+  $keystone_vip     = hiera('management_service_endpoint')
 
+  $keystone_public_vip = hiera('public_service_endpoint')
   if hiera('role', 'none') == 'primary-keystone' {
     $primary_keystone = 'true'
   } else {
@@ -49,6 +50,7 @@ if $detach_keystone_plugin {
   $calculated_content = inline_template('
 primary_keystone: <%= @primary_keystone %>
 keystone_vip: <%= @keystone_vip %>
+keystone_public_vip: <%= @keystone_public_vip %>
 <% if @keystone_nodes -%>
 <% require "yaml" -%>
 keystone_nodes:
