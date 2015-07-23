@@ -1,4 +1,3 @@
-# Deployment groups
 - id: primary-keystone
   type: group
   role: [primary-keystone]
@@ -21,15 +20,14 @@
     strategy:
       type: parallel
 
-# Deployment tasks
 - id: keystone-haproxy
   type: puppet
   groups: [primary-keystone, keystone]
   required_for: [task-keystone, deploy_end]
   requires: [deploy_start, keystone-vip, cluster-haproxy]
   parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/detach-keystone/haproxy.pp
-    puppet_modules: /etc/puppet/modules
+    puppet_manifest: 'haproxy.pp'
+    puppet_modules: '/etc/puppet/modules'
     timeout: 3600
 
 - id: keystone-vip
@@ -38,8 +36,8 @@
   required_for: [deploy_end]
   requires: [cluster]
   parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/detach-keystone/vip.pp
-    puppet_modules: /etc/puppet/modules
+    puppet_manifest: 'vip.pp'
+    puppet_modules: '/etc/puppet/modules'
     timeout: 3600
 
 - id: task-keystone
@@ -48,10 +46,21 @@
   requires: [hosts, firewall]
   requires: [keystone-haproxy, keystone-vip]
   parameters:
-    puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/keystone/keystone.pp
-    puppet_modules: /etc/puppet/modules
+    puppet_manifest: '/etc/puppet/modules/osnailyfacter/modular/keystone/keystone.pp'
+    puppet_modules: '/etc/puppet/modules'
     timeout: 3600
   test_pre:
     cmd: ruby /etc/puppet/modules/osnailyfacter/modular/keystone/keystone_pre.rb
   test_post:
     cmd: ruby /etc/puppet/modules/osnailyfacter/modular/keystone/keystone_post.rb
+
+- id: keystone-hiera-override
+  type: puppet
+  groups: [primary-controller, controller, primary-keystone, keystone, cinder,
+    cinder-vmware, compute, ceph-osd, primary-mongo, mongo]
+  requires: [globals]
+  required_for: [logging]
+  parameters:
+    puppet_manifest: '/etc/puppet/modules/osnailyfacter/modular/detach-keystone/hiera-override.pp'
+    puppet_modules: '/etc/puppet/modules'
+    timeout: 120

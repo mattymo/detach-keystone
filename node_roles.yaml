@@ -1,0 +1,11 @@
+keystone:
+  name: 'Keystone'
+  description: 'Separated Keystone from controller'
+  has_primary: true
+  public_ip_required: false
+  weight: 100
+  limits:
+  conflicts:
+    - controller
+    - compute
+

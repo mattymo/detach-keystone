@@ -1,0 +1,8 @@
+- id: 'detach_keystone_vip'
+  default_mapping: 'management'
+  properties:
+    subnet: true
+    gateway: false
+    vip:
+       - name: 'keystone'
+         namespace: 'haproxy'
