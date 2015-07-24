@@ -7,13 +7,23 @@ $plugin_name            = "detach-keystone"
 
 if $detach_keystone_plugin {
   $network_metadata = hiera_hash('network_metadata')
-  $settings_hash    = parseyaml($detach_keystone_plugin['yaml_additional_config'])
-  $nodes_hash       = hiera('nodes')
-  $management_vip   = hiera('management_vip')
-  $keystone_vip     = hiera('management_service_endpoint')
+  if ! $network_metadata['vips']['service_endpoint'] {
+    fail('Keystone service endpoint VIP is not defined')
+  }
+  if ! $network_metadata['vips']['public_service_endpoint'] {
+    fail('Keystone service endpoint public VIP is not defined')
+  }
 
-  $keystone_public_vip = hiera('public_service_endpoint')
-  if hiera('role', 'none') == 'primary-keystone' {
+  $settings_hash       = parseyaml($detach_keystone_plugin['yaml_additional_config'])
+  $keystone_vip        = pick($settings_hash['remote_keystone'],
+                              $network_metadata['vips']['service_endpoint']['ipaddr'])
+
+  $public_keystone_vip = pick($settings_hash['remote_keystone'],
+                              $network_metadata['vips']['public_service_endpoint']['ipaddr'])
+
+  $nodes_hash          = hiera('nodes')
+
+  if hiera('role', 'none') == 'primary-standalone-keystone' {
     $primary_keystone = 'true'
   } else {
     $primary_keystone = 'false'
@@ -26,7 +36,7 @@ if $detach_keystone_plugin {
   }
 
   $keystone_nodes       = get_nodes_hash_by_roles($network_metadata,
-    ['primary_keystone', 'keystone'])
+    ['primary-standandalone-keystone', 'standalone-keystone'])
   $keystone_address_map = get_node_to_ipaddr_map_by_network_role($keystone_nodes,
     'mgmt/keystone')
   $keystone_nodes_ips   = values($keystone_address_map)
@@ -34,13 +44,12 @@ if $detach_keystone_plugin {
 
   case hiera('role', 'none') {
     /keystone/: {
-      $corosync_roles = ['primary-keystone', 'keystone']
-      $deploy_vrouter = 'false'
+      $corosync_roles = $keystone_roles
       $corosync_nodes = $keystone_nodes
+      $deploy_vrouter = 'false'
     }
     /controller/: {
       $deploy_vrouter = 'true'
-      $mysql_enabled  = 'false'
     }
     default: {
       $corosync_roles = ['primary-controller', 'controller']
@@ -50,7 +59,7 @@ if $detach_keystone_plugin {
   $calculated_content = inline_template('
 primary_keystone: <%= @primary_keystone %>
 keystone_vip: <%= @keystone_vip %>
-keystone_public_vip: <%= @keystone_public_vip %>
+public_keystone_vip: <%= @public_keystone_vip %>
 <% if @keystone_nodes -%>
 <% require "yaml" -%>
 keystone_nodes:
@@ -59,19 +68,17 @@ keystone_nodes:
 keystone_ipaddresses:
 <% if @keystone_nodes_ips -%>
 <%
-@keystone_nodes_ips.each do |dbnode|
-%>  - <%= dbnode %>
+@keystone_nodes_ips.each do |keystone_ip|
+%>  - <%= keystone_ip %>
 <% end -%>
 <% end -%>
 <% if @keystone_nodes_names -%>
-mysqld_names:
+keystone_nodes_names:
 <%
-@keystone_nodes_names.each do |dbnode|
-%>  - <%= dbnode %>
+@keystone_nodes_names.each do |keystone_name|
+%>  - <%= keystone_name %>
 <% end -%>
 <% end -%>
-mysql:
-  enabled: <%= @mysql_enabled %>
 primary_controller: <%= @primary_controller %>
 <% if @corosync_nodes -%>
 <% require "yaml" -%>
@@ -94,7 +101,7 @@ deploy_vrouter: <%= @deploy_vrouter %>
 
   file { "${hiera_dir}/${plugin_yaml}":
     ensure  => file,
-    content => "${detach_db_plugin['yaml_additional_config']}\n${calculated_content}\n",
+    content => "${detach_keystone_plugin['yaml_additional_config']}\n${calculated_content}\n",
     require => File['/etc/hiera/override'],
   }
 

@@ -54,6 +54,10 @@
   test_post:
     cmd: ruby /etc/puppet/modules/osnailyfacter/modular/keystone/keystone_post.rb
 
+#Disable keystone task on controllers
+- id: keystone
+  type: skipped
+
 - id: keystone-hiera-override
   type: puppet
   groups: [primary-controller, controller, primary-standalone-keystone, 

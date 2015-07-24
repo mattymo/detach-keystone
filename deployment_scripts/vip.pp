@@ -4,14 +4,21 @@ $internal_int             = hiera('internal_int')
 $public_int               = hiera('public_int',  undef)
 $primary_controller_nodes = hiera('primary_controller_nodes', false)
 $network_scheme           = hiera('network_scheme', {})
-$keystone_vip             = hiera('service_endpoint')
-$keystone_public_vip      = hiera('keystone_public_vip')
+$keystone_vip             = hiera('keystone_vip')
+$keystone_public_vip      = hiera('public_keystone_vip')
 
 #FIXME(bpiotrowski): This netmask data is the same as mgmt network
 if (hiera('vip_management_cidr_netmask', false)) {
   $vip_management_cidr_netmask = hiera('vip_management_cidr_netmask')
 } else {
   $vip_management_cidr_netmask = netmask_to_cidr($primary_controller_nodes[0]['internal_netmask'])
+}
+
+#FIXME(bpiotrowski): This netmask data is the same as public network
+if (hiera('vip_management_cidr_netmask', false)) {
+  $vip_public_cidr_netmask = hiera('vip_public_cidr_netmask')
+} else {
+  $vip_public_cidr_netmask = netmask_to_cidr($primary_controller_nodes[0]['public_netmask'])
 }
 
 $keystone_vip_data  = {
