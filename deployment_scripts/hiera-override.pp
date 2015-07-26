@@ -38,26 +38,31 @@ if $detach_keystone_plugin {
   $keystone_nodes       = get_nodes_hash_by_roles($network_metadata,
     ['primary-standandalone-keystone', 'standalone-keystone'])
   $keystone_address_map = get_node_to_ipaddr_map_by_network_role($keystone_nodes,
-    'mgmt/keystone')
+    'keystone/api')
   $keystone_nodes_ips   = values($keystone_address_map)
   $keystone_nodes_names = keys($keystone_address_map)
 
   case hiera('role', 'none') {
     /keystone/: {
-      $corosync_roles = $keystone_roles
-      $corosync_nodes = $keystone_nodes
-      $deploy_vrouter = 'false'
+      $corosync_roles   = $keystone_roles
+      $corosync_nodes   = $keystone_nodes
+      $deploy_vrouter   = 'false'
+      $keystone_enabled = 'true'
     }
     /controller/: {
-      $deploy_vrouter = 'true'
+      $deploy_vrouter   = 'true'
+      $keystone_enabled = 'false'
     }
     default: {
-      $corosync_roles = ['primary-controller', 'controller']
+      $corosync_roles   = ['primary-controller', 'controller']
+      $keystone_enabled = 'false'
     }
   }
 
   $calculated_content = inline_template('
 primary_keystone: <%= @primary_keystone %>
+service_endpoint: <%= @keystone_vip %>
+public_service_endpoint: <%= @public_keystone_vip %>
 keystone_vip: <%= @keystone_vip %>
 public_keystone_vip: <%= @public_keystone_vip %>
 <% if @keystone_nodes -%>
@@ -65,6 +70,8 @@ public_keystone_vip: <%= @public_keystone_vip %>
 keystone_nodes:
 <%= YAML.dump(@keystone_nodes).sub(/--- *$/,"") %>
 <% end -%>
+keystone:
+  enabled: <%= @keystone_enabled %>
 keystone_ipaddresses:
 <% if @keystone_nodes_ips -%>
 <%
@@ -73,7 +80,7 @@ keystone_ipaddresses:
 <% end -%>
 <% end -%>
 <% if @keystone_nodes_names -%>
-keystone_nodes_names:
+keystone_names:
 <%
 @keystone_nodes_names.each do |keystone_name|
 %>  - <%= keystone_name %>
