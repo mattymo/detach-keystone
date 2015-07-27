@@ -1,8 +1,8 @@
 - id: primary-standalone-keystone
   type: group
   role: [primary-standalone-keystone]
-  requires: [deploy_start, database]
-  required_for: [cinder-keystone, nova-keystone, deploy_end]
+  requires: [deploy_start, primary-standalone-database]
+  required_for: [primary-controller, cinder-keystone, nova-keystone, deploy_end]
   tasks: [fuel_pkgs, hiera, globals, tools, logging, netconfig, hosts, firewall,
     deploy_start, cluster, keystone-vip, cluster-haproxy, task-keystone]
   parameters:
@@ -12,7 +12,7 @@
 - id: standalone-keystone
   type: group
   role: [standalone-keystone]
-  requires: [deploy_start, primary-standalone-keystone, database]
+  requires: [deploy_start, primary-standalone-keystone]
   required_for: [deploy_end]
   tasks: [fuel_pkgs, hiera, globals, tools, logging, netconfig, hosts, firewall,
     deploy_start, cluster, keystone-vip, cluster-haproxy, 
@@ -55,8 +55,14 @@
   test_post:
     cmd: ruby /etc/puppet/modules/osnailyfacter/modular/keystone/keystone_post.rb
 
-#Disable keystone task on controllers
+#Disable keystone base tasks on controllers
 - id: keystone
+  type: skipped
+
+- id: keystone-db
+  type: skipped
+
+- id: openstack-haproxy-keystone
   type: skipped
 
 - id: keystone-hiera-override
