@@ -36,7 +36,7 @@ if $detach_keystone_plugin {
   }
 
   $keystone_nodes       = get_nodes_hash_by_roles($network_metadata,
-    ['primary-standandalone-keystone', 'standalone-keystone'])
+    ['primary-standalone-keystone', 'standalone-keystone'])
   $keystone_address_map = get_node_to_ipaddr_map_by_network_role($keystone_nodes,
     'keystone/api')
   $keystone_nodes_ips   = values($keystone_address_map)
