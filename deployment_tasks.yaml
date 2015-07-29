@@ -4,7 +4,8 @@
   requires: [deploy_start, primary-standalone-database]
   required_for: [primary-controller, cinder-keystone, nova-keystone, deploy_end]
   tasks: [fuel_pkgs, hiera, globals, tools, logging, netconfig, hosts, firewall,
-    deploy_start, cluster, keystone-vip, cluster-haproxy, task-keystone-db, task-keystone]
+    deploy_start, cluster, keystone-vip, cluster-haproxy, task-keystone-db,
+    memcached, task-keystone]
   parameters:
     strategy:
       type: one_by_one
@@ -16,7 +17,7 @@
   required_for: [deploy_end]
   tasks: [fuel_pkgs, hiera, globals, tools, logging, netconfig, hosts, firewall,
     deploy_start, cluster, keystone-vip, cluster-haproxy, 
-    task-keystone]
+    memcached, task-keystone]
   parameters:
     strategy:
       type: parallel
@@ -54,7 +55,8 @@
 - id: task-keystone
   type: puppet
   role: [primary-standalone-keystone, standalone-keystone]
-  requires: [deploy_start, keystone-haproxy, keystone-vip, task-keystone-db]
+  requires: [deploy_start, keystone-haproxy, keystone-vip, task-keystone-db,
+    memcached]
   required_for: [openstack-controller]
   parameters:
     puppet_manifest: '/etc/puppet/modules/osnailyfacter/modular/keystone/keystone.pp'

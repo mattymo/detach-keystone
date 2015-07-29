@@ -34,9 +34,10 @@ if $detach_keystone_plugin {
   } else {
     $primary_controller = 'false'
   }
-
+  $keystone_roles       =  ['primary-standalone-keystone',
+    'standalone-keystone']
   $keystone_nodes       = get_nodes_hash_by_roles($network_metadata,
-    ['primary-standalone-keystone', 'standalone-keystone'])
+    $keystone_roles)
   $keystone_address_map = get_node_to_ipaddr_map_by_network_role($keystone_nodes,
     'keystone/api')
   $keystone_nodes_ips   = values($keystone_address_map)
@@ -46,6 +47,8 @@ if $detach_keystone_plugin {
     /keystone/: {
       $corosync_roles   = $keystone_roles
       $corosync_nodes   = $keystone_nodes
+      $memcache_roles   = $keystone_roles
+      $memcache_nodes   = $keystone_nodes
       $deploy_vrouter   = 'false'
       $keystone_enabled = 'true'
     }
@@ -54,7 +57,6 @@ if $detach_keystone_plugin {
       $keystone_enabled = 'false'
     }
     default: {
-      $corosync_roles   = ['primary-controller', 'controller']
       $keystone_enabled = 'false'
     }
   }
@@ -99,6 +101,18 @@ corosync_roles:
 %>  - <%= crole %>
 <% end -%>
 <% end -%>
+<% if @memcache_nodes -%>
+<% require "yaml" -%>
+memcache_nodes:
+<%= YAML.dump(@memcache_nodes).sub(/--- *$/,"") %>
+<% end -%>
+<% if @memcache_roles -%>
+memcache_roles:
+<%
+@memcache_roles.each do |mrole|
+%>  - <%= mrole %>
+<% end -%>
+<% end -%>
 deploy_vrouter: <%= @deploy_vrouter %>
 ')
 
@@ -120,5 +134,10 @@ deploy_vrouter: <%= @deploy_vrouter %>
     path  => '/etc/hiera.yaml',
     line  => "  - override/${plugin_name}",
     after => '  - override/module/%{calling_module}',
+  }
+
+  #FIXME(mattymo): https://bugs.launchpad.net/fuel/+bug/1479317
+  package { 'python-openstackclient':
+    ensure => latest,
   }
 }
