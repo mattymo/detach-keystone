@@ -1,6 +1,6 @@
 attributes:
   metadata:
-    label: "Keystone settings"
+    label: "Keystone settings (NOTE: Requires detach-database plugin!!!)"
     weight: 90
   yaml_additional_config:
     type: "textarea"
