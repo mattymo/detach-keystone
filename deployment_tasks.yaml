@@ -3,7 +3,7 @@
   role: [primary-standalone-keystone]
   requires: [deploy_start, primary-standalone-database]
   required_for: [primary-controller, cinder-keystone, nova-keystone, deploy_end]
-  tasks: [fuel_pkgs, hiera, globals, database-hiera-override, tools, logging,
+  tasks: [fuel_pkgs, hiera, globals, tools, logging,
     netconfig, hosts, firewall, deploy_start, cluster, keystone-vip,
     cluster-haproxy, task-keystone-db, memcached, task-keystone]
   parameters:
@@ -15,7 +15,7 @@
   role: [standalone-keystone]
   requires: [deploy_start, primary-standalone-keystone]
   required_for: [deploy_end]
-  tasks: [fuel_pkgs, hiera, globals, database-hiera-override, tools, logging,
+  tasks: [fuel_pkgs, hiera, globals, tools, logging,
     netconfig, hosts, firewall, deploy_start, cluster, keystone-vip,
     cluster-haproxy, memcached, task-keystone]
   parameters:
@@ -46,7 +46,7 @@
   type: puppet
   role: [primary-standalone-keystone, standalone-keystone]
   required_for: [task-keystone]
-  requires: [deploy_start, keystone-hiera-override, database-hiera-override,
+  requires: [deploy_start, keystone-hiera-override, 
     netconfig]
   parameters:
     puppet_manifest: /etc/puppet/modules/osnailyfacter/modular/keystone/db.pp
@@ -96,7 +96,7 @@
     standalone-keystone, cinder, cinder-vmware, compute, ceph-osd,
     primary-mongo, mongo]
   requires: [globals]
-  required_for: [logging, database-hiera-override]
+  required_for: [logging]
   parameters:
     puppet_manifest: 'hiera-override.pp'
     puppet_modules: '/etc/puppet/modules'
