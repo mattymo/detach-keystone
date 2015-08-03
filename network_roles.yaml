@@ -9,6 +9,7 @@
     vip:
        - name: 'service_endpoint'
          namespace: 'haproxy'
+         alias: 'service_endpoint'
 
 - id: 'detach_keystone_public_vip'
   default_mapping: 'public'
@@ -21,3 +22,4 @@
     vip:
        - name: 'public_service_endpoint'
          namespace: 'haproxy'
+         alias: 'public_service_endpoint'
