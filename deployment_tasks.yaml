@@ -70,13 +70,13 @@
 
 - id: keystone-controller
   type: puppet
-  role: [primary-controller, controller]
+  groups: [primary-controller, controller]
   requires: [deploy_start, keystone]
   required_for: [cinder-keystone, sahara-keystone, swift-keystone, neutron-keystone,
     glance-keystone, heat-keystone, ceilometer-keystone, murano-keystone,
     nova-keystone]
   parameters:
-    puppet_manifest: 'controller-keystone.pp'
+    puppet_manifest: 'keystone-controller.pp'
     puppet_modules: '/etc/puppet/modules'
     timeout: 600
 
@@ -96,7 +96,7 @@
     standalone-keystone, cinder, cinder-vmware, compute, ceph-osd,
     primary-mongo, mongo]
   requires: [globals]
-  required_for: [logging]
+  required_for: [logging, keystone-controller]
   parameters:
     puppet_manifest: 'hiera-override.pp'
     puppet_modules: '/etc/puppet/modules'
