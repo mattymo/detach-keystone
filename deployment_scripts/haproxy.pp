@@ -5,7 +5,7 @@ $keystone_hash    = hiera_hash('keystone', {})
 # enabled by default
 $use_keystone = pick($keystone_hash['enabled'], true)
 $public_ssl_hash = hiera('public_ssl')
-
+$database_vip    = hiera('database_vip')
 #todo(sv): change to 'keystone' as soon as keystone as node-role was ready    
 $keystones_address_map = get_node_to_ipaddr_map_by_network_role(get_nodes_hash_by_roles($network_metadata, ['primary-standalone-keystone', 'standalone-keystone']), 'keystone/api')
 
@@ -38,10 +38,20 @@ Haproxy::Service        { use_include => true }
 Haproxy::Balancermember { use_include => true }
 
 
-#FIXME(mattymo): base haproxy stats task doesn't support specifying VIP
-class { '::openstack::ha::stats':
-  internal_virtual_ip => $internal_virtual_ip,
-  public_virtual_ip   => $internal_virtual_ip,
+#FIXME(mattymo): base haproxy stats task doesn't work with multiple plugins
+openstack::ha::haproxy_service { 'stats-detach-keystone':
+  public_virtual_ip      => undef,
+  internal_virtual_ip    => $internal_virtual_ip,
+  order                  => '011',
+  listen_port            => '10000',
+  haproxy_config_options => {
+    'stats' => ['enable', 'uri /', 'refresh 5s', 'show-node', 'show-legends', 'hide-version'],
+    'mode'  => 'http',
+  },
 }
 
+class { '::openstack::ha::stats':
+  internal_virtual_ip => $internal_virtual_ip,
+  public_virtual_ip   => $database_vip,
+}
 
