@@ -4,7 +4,6 @@ standalone-keystone:
   has_primary: true
   public_ip_required: true
   weight: 100
-  limits:
   conflicts:
     - controller
     - compute
