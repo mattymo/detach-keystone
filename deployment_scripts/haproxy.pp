@@ -37,21 +37,3 @@ if ($use_keystone) {
 Haproxy::Service        { use_include => true }
 Haproxy::Balancermember { use_include => true }
 
-
-#FIXME(mattymo): base haproxy stats task doesn't work with multiple plugins
-openstack::ha::haproxy_service { 'stats-detach-keystone':
-  public_virtual_ip      => undef,
-  internal_virtual_ip    => $internal_virtual_ip,
-  order                  => '011',
-  listen_port            => '10000',
-  haproxy_config_options => {
-    'stats' => ['enable', 'uri /', 'refresh 5s', 'show-node', 'show-legends', 'hide-version'],
-    'mode'  => 'http',
-  },
-}
-
-class { '::openstack::ha::stats':
-  internal_virtual_ip => $internal_virtual_ip,
-  public_virtual_ip   => $database_vip,
-}
-
